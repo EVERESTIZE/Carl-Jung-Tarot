@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARCHETYPE : 무의식의 타로 아카이브</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'choiceFont';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'choiceFont', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #06070a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    /* 배경 은은한 신비로운 글로우 */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.04) 0%, rgba(56, 189, 248, 0.03) 40%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+    }
+
+    .board {
+      background: #0c0f17;
+      border: 1px solid #1e2638;
+      border-radius: 20px;
+      padding: 24px 18px 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(212, 175, 55, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tarot-arch {
+      width: 44px;
+      height: 44px;
+      border: 1px solid #d4af37;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      color: #d4af37;
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+    }
+
+    /* 1. 인트로 화면 */
+    .intro-scene {
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+    .intro-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: #d4af37;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .intro-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      line-height: 1.4;
+      color: #f8fafc;
+      margin-bottom: 16px;
+      word-break: keep-all;
+    }
+    .intro-tarot-box {
+      background: #07090f;
+      border: 1px dashed #283347;
+      border-radius: 12px;
+      padding: 18px 16px;
+      margin-bottom: 20px;
+      text-align: left;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #94a3b8;
+      word-break: keep-all;
+    }
+    .intro-tarot-box strong {
+      color: #d4af37;
+    }
+    .intro-info {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    /* 2. 타로 테스트 진행 씬 */
+    #quiz-scene {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      letter-spacing: 1px;
+    }
+    .status-bar .counter {
+      color: #d4af37;
+    }
+    .progress-line {
+      height: 4px;
+      background: #192233;
+      border-radius: 2px;
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #d4af37, #38bdf8);
+      transition: width 0.3s ease;
+    }
+    .question-prompt {
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.5;
+      color: #ffffff;
+      margin-bottom: 8px;
+      min-height: 52px;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .fan-guide {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* --- 부채꼴(반호) 카드 배치 영역 --- */
+    .card-fan-area {
+      position: relative;
+      width: 100%;
+      height: 310px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      perspective: 1200px;
+      padding-bottom: 15px;
+    }
+
+    /* --- 기존 .tarot-card 너비 및 높이 수정 --- */
+.tarot-card {
+  position: absolute;
+  bottom: 15px;
+  width: 108px;        /* 135px -> 108px로 슬림화해 겹침 최소화 */
+  height: 180px;       /* 텍스트 줄바꿈 공간 확보 */
+  background: radial-gradient(circle at 50% 30%, #171d2b, #080a10);
+  border: 2px solid #d4af37;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8), 0 0 12px rgba(212, 175, 55, 0.25);
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: 50% 150%; /* 회전축을 더 아래로 내려 부채꼴을 완만하게 형성 */
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.3s ease;
+}
+
+    /* 금박 안쪽 이중 프레임 */
+    .tarot-card::before {
+      content: "";
+      position: absolute;
+      top: 4px; left: 4px; right: 4px; bottom: 4px;
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .card-rune {
+      font-size: 0.75rem;
+      color: #d4af37;
+      letter-spacing: 1px;
+    }
+    .card-text {
+      font-size: 0.75rem;
+      line-height: 1.42;
+      color: #f1f5f9;
+      word-break: keep-all;
+      z-index: 1;
+      padding: 0 2px;
+    }
+    .card-seal {
+      font-size: 0.72rem;
+      color: #d4af37;
+    }
+
+    /* 4장 반호형 부채꼴 배치 */
+    .tarot-card:nth-child(1) {
+      transform: translateX(-110px) translateY(-20px) rotate(-16deg);
+      z-index: 1;
+    }
+    .tarot-card:nth-child(2) {
+      transform: translateX(-37px) translateY(-30px) rotate(-5deg);
+      z-index: 2;
+    }
+    .tarot-card:nth-child(3) {
+      transform: translateX(37px) translateY(-30px) rotate(5deg);
+      z-index: 3;
+    }
+    .tarot-card:nth-child(4) {
+      transform: translateX(110px) translateY(-20px) rotate(16deg);
+      z-index: 4;
+    }
+
+    
+
+    /* 뽑힌 카드 연출: 중앙으로 솟구치며 나머지 카드들과 확실히 분리 */
+.tarot-card.is-picked {
+  transform: translateY(-70px) rotate(0deg) scale(1.18) !important;
+  border-color: #ffffff !important;
+  z-index: 30 !important;
+  transition: transform 0.35s ease;
+}
+
+    /* 3. 영수증/티켓형 아카이브 결과 씬 */
+    .ticket {
+      background: #080a10;
+      border: 1px dashed #334155;
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.4s ease;
+    }
+    .ticket-header {
+      font-size: 0.72rem;
+      letter-spacing: 3px;
+      color: #d4af37;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .ticket-badge {
+      display: inline-block;
+      background: rgba(212, 175, 55, 0.12);
+      color: #fef08a;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 16px;
+      margin-bottom: 12px;
+    }
+    .ticket-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 14px;
+      word-break: keep-all;
+    }
+    .ticket-divider {
+      height: 1px;
+      border-bottom: 1px dashed #1e293b;
+      margin: 14px 0;
+    }
+    .ticket-desc {
+      text-align: left;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      color: #94a3b8;
+      white-space: pre-line;
+      word-break: keep-all;
+      background: #0d121c;
+      border: 1px solid #1a2336;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .ticket-footer {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .barcode {
+      letter-spacing: 5px;
+      font-size: 1.1rem;
+      color: #475569;
+      user-select: none;
+    }
+    .serial-no {
+      font-size: 0.68rem;
+      color: #475569;
+      letter-spacing: 1px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #d4af37, #b48a1c);
+      color: #0b0e14;
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 14px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.3);
+      margin-top: 16px;
+    }
+    .primary-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+/* 12대 원형 도감 뷰어 컨테이너 */
+.archive-viewer {
+  display: none;
+  animation: fadeIn 0.3s ease;
+  text-align: center;
+}
+
+.viewer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.nav-arrow-btn {
+  background: #131926;
+  border: 1px solid #d4af37;
+  color: #d4af37;
+  font-size: 1.1rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.nav-arrow-btn:hover {
+  background: #d4af37;
+  color: #080a10;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+}
+
+.viewer-counter {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  letter-spacing: 2px;
+}
+
+/* 보조 버튼 스타일 (도감 열기 / 내 결과로 복귀) */
+.secondary-btn {
+  width: 100%;
+  background: transparent;
+  color: #d4af37;
+  border: 1px solid #d4af37;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+.secondary-btn:hover {
+  background: rgba(212, 175, 55, 0.12);
+  transform: translateY(-1px);
+}
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="board" id="main-board">
+      
+      <!-- 1. 시작 화면 -->
+      <div class="intro-scene" id="intro-view">
+        <div class="tarot-arch">✦</div>
+        <div class="intro-tag">Jungian Archetype Deck</div>
+        <h1 class="intro-title">무의식이 숨겨둔<br>24장의 타로 아카이브</h1>
+        <div class="intro-tarot-box">
+          칼 구스타프 융은 모든 인간의 심연 속에 <strong>12가지 고유한 원형</strong>이 새겨져 있다고 보았습니다.<br><br>
+          스쳐 지나가는 질문마다 직관이 이끄는 금박 카드를 뽑아 올리세요. 24번의 선택 끝에 당신의 무의식을 지배하는 <strong>단 하나의 봉인된 원형 카드</strong>가 해금됩니다.
+        </div>
+        <div class="intro-info">
+          <span>덱 규모: 24 카드</span>
+          <span>•</span>
+          <span>소요 시간: 약 4분</span>
+        </div>
+        <button class="primary-btn" onclick="startDeck()">타로 덱 셔플 & 시작</button>
+      </div>
+
+      <!-- 2. 테스트 진행 화면 -->
+      <div id="quiz-scene">
+        <div class="status-bar">
+          <span class="counter" id="deck-counter">CARD 01 / 24</span>
+          <span>SELECT A CARD</span>
+        </div>
+        <div class="progress-line">
+          <div class="progress-fill" id="progress-line"></div>
+        </div>
+        <div class="question-prompt" id="prompt-text">질문 내용이 표시됩니다.</div>
+        <div class="fan-guide">▼ 직관이 닿는 카드를 선택해 위로 뽑아내세요 ▼</div>
+        <div class="card-fan-area" id="cards-container"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const archetypes = {
+      INNOCENT: {
+        title: "순수주의자 (The Innocent)",
+        badge: "Arcana 01 · 낙관과 신뢰의 영혼",
+        desc: "당신은 세상의 어두운 이면 속에서도 맑은 희망과 선함을 믿는 순수한 심연의 소유자입니다. 성실하고 꾸밈없는 태도로 주변에 온전한 안식을 선물합니다.\n\n• 영혼의 키워드: 안전, 순수한 이상, 조화\n• 발현되는 권능: 높은 신뢰감, 낙천성, 무구한 회복력\n• 주의해야 할 그림자: 현실 도피, 지나친 순진함으로 인한 상처"
+      },
+      EVERYMAN: {
+        title: "보통 사람 (The Everyman)",
+        badge: "Arcana 02 · 연대와 평등의 영혼",
+        desc: "당신은 위선과 특권의식을 거부하며, 가장 진솔한 눈높이에서 타인과 호흡하는 현실의 중심추입니다. 누구나 편안히 마음을 열게 하는 온기를 지녔습니다.\n\n• 영혼의 키워드: 소속감, 상호 연결, 공감\n• 발현되는 권능: 겸손함, 포용력, 끈끈한 유대감 형성\n• 주의해야 할 그림자: 집단에 매몰되어 자신의 고유한 색채를 지우는 것"
+      },
+      HERO: {
+        title: "영웅 (The Hero)",
+        badge: "Arcana 03 · 결단과 승리의 영혼",
+        desc: "당신은 어떤 시련 앞에서도 무릎 꿇지 않고 이를 악물며 끝내 돌파구를 열어내는 사람입니다. 자신의 역량을 입증하고 승리를 쟁취할 때 살아있음을 느낍니다.\n\n• 영혼의 키워드: 역경 극복, 불굴의 투지, 성취\n• 발현되는 권능: 끈기, 솔선수범, 결단력 있는 추진력\n• 주의해야 할 그림자: 실패에 대한 병적인 두려움, 끊임없는 경쟁 강박"
+      },
+      CAREGIVER: {
+        title: "조력자 (The Caregiver)",
+        badge: "Arcana 04 · 연민과 보호의 영혼",
+        desc: "당신은 타인의 상처와 결핍을 지나치지 못하고 품어주는 대지의 수호자입니다. 주변 사람들에게 단단한 방패막과 피난처가 되어주는 데서 보람을 얻습니다.\n\n• 영혼의 키워드: 헌신, 이타심, 보살핌\n• 발현되는 권능: 세심한 관찰력, 무조건적인 온기, 치유력\n• 주의해야 할 그림자: 자신을 갉아먹는 희생으로 인한 번아웃"
+      },
+      EXPLORER: {
+        title: "탐험가 (The Explorer)",
+        badge: "Arcana 05 · 자유와 방랑의 영혼",
+        desc: "당신은 획일화된 규격과 안락한 새장을 단호히 거부하고 미지의 지평선을 향해 닻을 올리는 모험가입니다. 스스로 길을 낼 때 진정한 자아를 발견합니다.\n\n• 영혼의 키워드: 자유, 자아 탐색, 개척\n• 발현되는 권능: 독립심, 두려움 없는 호기심, 유연성\n• 주의해야 할 그림자: 한곳에 머물지 못하는 만성적 공허와 방황"
+      },
+      REBEL: {
+        title: "반역자 (The Rebel)",
+        badge: "Arcana 06 · 변혁과 해방의 영혼",
+        desc: "당신은 썩은 관습과 낡은 질서에 거침없이 균열을 내는 혁명가입니다. 부조리한 억압에 당당히 반기를 들고 완전히 새로운 판을 짜는 파괴적 힘을 지녔습니다.\n\n• 영혼의 키워드: 금기의 파괴, 근본적 해방, 개혁\n• 발현되는 권능: 날카로운 비판 의식, 파격적 실행력\n• 주의해야 할 그림자: 목적 없는 반발심, 모든 것을 파괴하려는 충동"
+      },
+      LOVER: {
+        title: "연인 (The Lover)",
+        badge: "Arcana 07 · 열정과 미학의 영혼",
+        desc: "당신은 사랑하는 대상과 영혼 깊은 교감을 나누며 오감을 다해 삶의 아름다움을 탐닉합니다. 가슴 뛰는 황홀경과 진정한 유대감이 당신의 연료입니다.\n\n• 영혼의 키워드: 친밀감, 감각적 몰입, 낭만\n• 발현되는 권능: 매혹, 풍부한 감수성, 깊은 공감 능력\n• 주의해야 할 그림자: 거절에 대한 극심한 공포, 감정적 과몰입"
+      },
+      CREATOR: {
+        title: "창조자 (The Creator)",
+        badge: "Arcana 08 · 영감과 현현의 영혼",
+        desc: "당신은 머릿속의 영감을 세상에 실체로 빚어내는 심미안을 지닌 장인입니다. 남들이 흉내 낼 수 없는 독창적인 세계관과 결과물을 남기는 것이 삶의 이유입니다.\n\n• 영혼의 키워드: 독창성, 예술적 완성도, 구현\n• 발현되는 권능: 탁월한 상상력, 미적 감각, 혁신성\n• 주의해야 할 그림자: 완벽하지 않으면 첫 삽도 뜨지 못하는 결벽증"
+      },
+      JESTER: {
+        title: "어릿광대 (The Jester)",
+        badge: "Arcana 09 · 유희와 지혜의 영혼",
+        desc: "당신은 가장 무겁고 절망적인 순간조차 재치 있는 유머로 가볍게 뒤집어버리는 해방자입니다. 미래의 불안 대신 오직 지금 이 순간의 환희를 긍정합니다.\n\n• 영혼의 키워드: 순수한 즐거움, 위트, 카타르시스\n• 발현되는 권능: 분위기 반전력, 번뜩이는 순발력, 탈경직\n• 주의해야 할 그림자: 진지한 마주침을 회피하기 위한 가면 놀이"
+      },
+      SAGE: {
+        title: "현자 (The Sage)",
+        badge: "Arcana 10 · 진리와 통찰의 영혼",
+        desc: "당신은 주관적 감정이나 미신에 현혹되지 않고, 사물의 이면과 우주의 근본 원리를 차분하게 규명하는 탐구자입니다. 객관적 진실이 최고의 가치입니다.\n\n• 영혼의 키워드: 진리 규명, 팩트, 지적 명료성\n• 발현되는 권능: 논리적 분석력, 본질 투시, 통찰력\n• 주의해야 할 그림자: 끝없는 사색에 갇혀 실행하지 못하는 분석 마비"
+      },
+      MAGICIAN: {
+        title: "마법사 (The Magician)",
+        badge: "Arcana 11 · 비전과 연금술의 영혼",
+        desc: "당신은 겉으로 드러나지 않는 보이지 않는 힘과 흐름을 읽어내어, 현실의 판도를 완전히 뒤바꾸는 비전가입니다. 직관과 신념으로 기적을 직조합니다.\n\n• 영혼의 키워드: 질적 변화, 비전 실현, 패러다임 전환\n• 발현되는 권능: 비범한 직관, 무의식 감지력, 변혁 주도\n• 주의해야 할 그림자: 타인을 조작하려는 오만함, 현실 도외시"
+      },
+      RULER: {
+        title: "통치자 (The Ruler)",
+        badge: "Arcana 12 · 질서와 통제의 영혼",
+        desc: "당신은 혼돈과 무질서 속에서 확고한 규율을 세우고, 견고한 왕국과 번영을 일구는 기둥입니다. 기꺼이 책임을 짊어지며 구성원을 시스템으로 이끕니다.\n\n• 영혼의 키워드: 체계 구축, 통제권, 안정적 번영\n• 발현되는 권능: 조직 장악력, 구조적 사고, 높은 책임감\n• 주의해야 할 그림자: 모든 것을 쥐고 흔들려는 권위주의와 통제 강박"
+      }
+    };
+
+    // 24문항 (12대 원형 각 8회 완벽 분배 + 12번 옵션 A, 24번 옵션 B 적용)
+    const questions = [
+      {
+        question: "주말이나 휴일에 나만의 완벽한 하루를 보낸다면?",
+        choices: [
+          { text: "아직 가보지 않은 미지의 장소로 떠나 자유를 만끽한다.", type: "EXPLORER" },
+          { text: "조용히 책이나 다큐멘터리를 파고들며 새로운 통찰을 얻는다.", type: "SAGE" },
+          { text: "친구들과 파티를 열거나 맛있는 음식을 먹으며 신나게 웃는다.", type: "JESTER" },
+          { text: "새로운 아이디어를 구상하고 작품이나 결과물을 직접 만든다.", type: "CREATOR" }
+        ]
+      },
+      {
+        question: "주변 사람들이 나에게 가장 자주 해주는 말은?",
+        choices: [
+          { text: "\"너랑 있으면 마음이 정말 편안하고 배려받는 기분이야.\"", type: "CAREGIVER" },
+          { text: "\"넌 어떤 어려운 일도 기어코 해내는 끈기가 있어.\"", type: "HERO" },
+          { text: "\"가식 없이 편하고 누구와도 잘 통하는 진솔한 친구야.\"", type: "EVERYMAN" },
+          { text: "\"너는 사람을 끌어당기는 특별한 직관과 아우라가 있어.\"", type: "MAGICIAN" }
+        ]
+      },
+      {
+        question: "모임이나 팀 프로젝트에서 위기 상황이 터졌을 때 나는?",
+        choices: [
+          { text: "전면에 나서서 명확한 규칙을 정하고 질서를 바로잡는다.", type: "RULER" },
+          { text: "\"기존 방식이 틀렸어!\"라며 과감하게 판을 엎고 새 길을 찾는다.", type: "REBEL" },
+          { text: "누군가 다치지 않도록 팀원들의 감정을 살피고 챙긴다.", type: "CAREGIVER" },
+          { text: "원인을 차분하고 객관적으로 분석해 최적의 해결책을 제시한다.", type: "SAGE" }
+        ]
+      },
+      {
+        question: "내가 인생에서 가장 중요하게 추구하는 핵심 가치는?",
+        choices: [
+          { text: "거짓 없는 신뢰와 순수한 행복", type: "INNOCENT" },
+          { text: "진심을 다해 몰입할 수 있는 사랑과 깊은 유대", type: "LOVER" },
+          { text: "남들이 보지 못하는 비전을 현실로 바꾸는 힘", type: "MAGICIAN" },
+          { text: "남들에게 휘둘리지 않고 내 뜻대로 통제하는 안정감", type: "RULER" }
+        ]
+      },
+      {
+        question: "나를 가장 지치게 하고 참기 힘들게 만드는 환경은?",
+        choices: [
+          { text: "지나치게 엄격한 규율과 뻔하고 답답한 일상", type: "EXPLORER" },
+          { text: "불합리한 관습을 당연하게 강요하는 조직", type: "REBEL" },
+          { text: "어떠한 재미나 웃음도 허용되지 않는 경직된 분위기", type: "JESTER" },
+          { text: "나의 성과와 존재 가치를 알아주지 않는 무기력한 상황", type: "HERO" }
+        ]
+      },
+      {
+        question: "선택의 기로에 섰을 때 나의 가장 주된 결정 기준은?",
+        choices: [
+          { text: "\"내 마음을 뛰게 하는가? 가슴 깊이 사랑할 수 있는가?\"", type: "LOVER" },
+          { text: "\"세상에 없던 나만의 독창적인 결과물을 남길 수 있는가?\"", type: "CREATOR" },
+          { text: "\"누구도 소외되지 않고 모두에게 보편적으로 공평한가?\"", type: "EVERYMAN" },
+          { text: "\"옳고 그름이 명확하며 선한 믿음에 부합하는가?\"", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "내가 꿈꾸는 이상적인 리더십의 형태는?",
+        choices: [
+          { text: "강력한 권한과 조직화로 구성원 전체를 번영으로 이끄는 리더", type: "RULER" },
+          { text: "앞장서서 장애물을 부수고 목표를 돌파해 내는 솔선수범형 리더", type: "HERO" },
+          { text: "보이지 않는 큰 그림을 보고 사람들에게 영감을 불어넣는 비전가", type: "MAGICIAN" },
+          { text: "구성원들의 필요를 조용히 채워주는 든든한 서포터형 리더", type: "CAREGIVER" }
+        ]
+      },
+      {
+        question: "지친 하루를 끝내고 나를 가장 깊게 치유해 주는 것은?",
+        choices: [
+          { text: "아무 생각 없이 한바탕 크게 웃을 수 있는 예능이나 대화", type: "JESTER" },
+          { text: "복잡한 세상을 잊게 해주는 깊이 있는 사색과 독서", type: "SAGE" },
+          { text: "좋아하는 음악을 듣거나 내 손으로 무언가를 끄적이는 창작의 시간", type: "CREATOR" },
+          { text: "내가 사랑하는 대상과 나누는 온기 있는 대화와 시간", type: "LOVER" }
+        ]
+      },
+      {
+        question: "새로운 무리에 들어갔을 때 나의 자연스러운 포지션은?",
+        choices: [
+          { text: "튀지 않고 모나지 않게 사람들과 두루두루 어울리는 이웃", type: "EVERYMAN" },
+          { text: "기존의 이상한 서열이나 관행을 슬쩍 무시하고 마이웨이로 행동하는 사람", type: "REBEL" },
+          { text: "남들이 안 해본 색다른 경험담을 풀어놓는 모험가", type: "EXPLORER" },
+          { text: "사람들의 선의를 믿으며 편견 없이 먼저 미소 짓는 사람", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "무언가를 창작하거나 일할 때 가장 집착하는 부분은?",
+        choices: [
+          { text: "어설픈 흉내가 아닌, 나만의 독창적인 철학과 완성도", type: "CREATOR" },
+          { text: "어떤 변수도 통제할 수 있는 정교한 구조와 질서", type: "RULER" },
+          { text: "감정이나 편향이 섞이지 않은 팩트와 논리적 무결성", type: "SAGE" },
+          { text: "보는 사람의 마음을 뒤흔드는 강렬한 감동과 열정", type: "LOVER" }
+        ]
+      },
+      {
+        question: "친구가 불합리한 일을 당해 분통을 터뜨릴 때 나의 첫 반응은?",
+        choices: [
+          { text: "\"가만있지 마! 당장 판을 엎고 권리를 찾아야 해!\"", type: "REBEL" },
+          { text: "\"속상했지? 네 잘못이 아니야.\" 등을 토닥여 준다.", type: "CAREGIVER" },
+          { text: "\"걱정하지 마. 내가 어떻게든 이길 방법을 마련해 줄게.\"", type: "HERO" },
+          { text: "일단 빵 터지는 농담으로 분위기를 풀고 기분을 환기해 준다.", type: "JESTER" }
+        ]
+      },
+      {
+        // 12번: 옵션 A 기반 (EXPLORER, MAGICIAN, EVERYMAN, INNOCENT)
+        question: "몸과 마음의 에너지가 완전히 고갈되었을 때, 무의식적으로 찾는 긴급 처방은?",
+        choices: [
+          { text: "모든 연락을 끊고 낯선 곳으로 훌쩍 떠나거나 인적 없는 길을 무작정 걷는다.", type: "EXPLORER" },
+          { text: "깊은 명상이나 사색에 잠기며 혼자만의 내면 세계 속으로 침잠한다.", type: "MAGICIAN" },
+          { text: "가장 편한 옷을 입고 소박한 음식을 먹으며 익숙한 사람들과 함께 있는다.", type: "EVERYMAN" },
+          { text: "\"결국 다 잘 풀릴 거야.\" 순수했던 시절의 추억이나 힐링 콘텐츠를 찾는다.", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "예상치 못한 큰돈이나 여유 자금이 생겼을 때 나의 첫 소비 방식은?",
+        choices: [
+          { text: "평소 꼭 갖고 싶었던 고성능 창작 장비나 도구를 구입한다.", type: "CREATOR" },
+          { text: "아무 계획 없이 낯선 나라로 훌쩍 떠나는 여행 티켓을 끊는다.", type: "EXPLORER" },
+          { text: "분산 투자와 자산 시스템을 구축해 흔들리지 않는 재정 기반을 다진다.", type: "RULER" },
+          { text: "부모님이나 소중한 사람에게 필요한 선물을 사주거나 후원한다.", type: "CAREGIVER" }
+        ]
+      },
+      {
+        question: "뼈아픈 실패나 좌절을 겪었을 때 내가 무의식적으로 보이는 첫 반응은?",
+        choices: [
+          { text: "\"이대로 끝낼 순 없어!\" 이를 악물고 두 배로 노력해 설욕을 다짐한다.", type: "HERO" },
+          { text: "감정을 추스르고 왜 실패했는지 원인을 복기하며 분석 노트를 쓴다.", type: "SAGE" },
+          { text: "\"인생 원래 그런 거지 뭐!\" 자조 섞인 농담으로 털어내며 웃어넘긴다.", type: "JESTER" },
+          { text: "\"더 좋은 뜻이 있을 거야.\" 긍정적인 믿음을 잃지 않으려 스스로를 다독인다.", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "나와 가치관이 정반대인 사람과 한 팀이 되어 일해야 할 때 나의 처세는?",
+        choices: [
+          { text: "불필요한 마찰을 피하고 상식선에서 무난하게 보폭을 맞춘다.", type: "EVERYMAN" },
+          { text: "상대방의 숨은 심리와 욕구를 꿰뚫어 보고 자연스럽게 내 페이스로 유도한다.", type: "MAGICIAN" },
+          { text: "억지로 맞출 생각 없이, 상대의 모순과 위선을 정면으로 꼬집는다.", type: "REBEL" },
+          { text: "먼저 사적인 호감을 표현하고 진심 어린 식사 자리를 만들어 마음의 벽을 허문다.", type: "LOVER" }
+        ]
+      },
+      {
+        question: "영화나 소설을 볼 때 가장 강하게 감정 이입되는 인물은?",
+        choices: [
+          { text: "온갖 시련과 상처를 이겨내고 끝내 승리를 쟁취하는 주인공", type: "HERO" },
+          { text: "부조리한 시스템과 위선적인 법을 과감하게 조롱하고 부수는 안티히어로", type: "REBEL" },
+          { text: "세상의 몰이해 속에서도 자신만의 예술과 걸작에 집착하는 장인", type: "CREATOR" },
+          { text: "끝없는 어둠 속에서도 순수한 동심과 희망을 끝까지 간직한 인물", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "누군가 나에게 무리한 부탁을 하거나 선을 넘으려 할 때 나는?",
+        choices: [
+          { text: "단호한 표정으로 원칙과 한계를 명확하게 선언해 차단한다.", type: "RULER" },
+          { text: "거절하면 상대가 상처받을까 봐 차마 거절하지 못하고 떠안는다.", type: "CAREGIVER" },
+          { text: "불편한 기색을 적당히 비추며 다른 사람들의 분위기를 살핀다.", type: "EVERYMAN" },
+          { text: "구구절절 설명하기보다 그 자리에서 조용히 거리를 두고 사라진다.", type: "EXPLORER" }
+        ]
+      },
+      {
+        question: "진정한 친구 관계를 유지하기 위해 가장 필수적인 요소는?",
+        choices: [
+          { text: "서로의 가장 깊은 치부와 비밀까지 나눌 수 있는 정서적 친밀감", type: "LOVER" },
+          { text: "위아래 없이 서로 동등하게 편한 모습 그대로 기댈 수 있는 편안함", type: "EVERYMAN" },
+          { text: "지적인 자극을 주고받으며 함께 성장할 수 있는 깊이 있는 대화", type: "SAGE" },
+          { text: "아무 말 없이 같이 있기만 해도 배를 잡고 웃을 수 있는 유쾌함", type: "JESTER" }
+        ]
+      },
+      {
+        question: "내가 가장 경멸하거나 절대 닮고 싶지 않은 사람의 유형은?",
+        choices: [
+          { text: "눈앞의 현실에만 갇혀 어떠한 영감이나 비전도 품지 못하는 사람", type: "MAGICIAN" },
+          { text: "부당한 대우를 받으면서도 군소리 없이 복종하는 비겁한 사람", type: "REBEL" },
+          { text: "자기 잇속만 챙기고 타인의 아픔에는 눈곱만큼도 관심 없는 사람", type: "CAREGIVER" },
+          { text: "조금만 힘들어도 쉽게 징징대고 포기해 버리는 나약한 사람", type: "HERO" }
+        ]
+      },
+      {
+        question: "매일 반복되는 평범한 일상 속에서 문득 허무함이 밀려올 때 나의 행동은?",
+        choices: [
+          { text: "당장 짐을 싸서 일상을 탈출하거나 새로운 취미/루틴을 시작한다.", type: "EXPLORER" },
+          { text: "그 공허한 감정을 글, 그림, 음악, 코드 등 창작물로 승화시킨다.", type: "CREATOR" },
+          { text: "친구들을 불러 모아 실컷 떠들며 맛있는 술과 음식으로 기분을 푼다.", type: "JESTER" },
+          { text: "명상이나 사색을 통해 내면의 직관과 무의식이 보내는 신호를 읽는다.", type: "MAGICIAN" }
+        ]
+      },
+      {
+        question: "내가 속한 집단(학교, 직장 등)에서 내가 가장 견디기 힘든 부조리는?",
+        choices: [
+          { text: "지휘 체계가 엉망이고 규칙이 없어 모두가 갈팡질팡하는 무질서", type: "RULER" },
+          { text: "서로를 불신하고 뒤에서 험담과 음모를 꾸미는 삭막한 공기", type: "INNOCENT" },
+          { text: "객관적인 팩트나 근거 없이 편견과 헛소문만으로 의사결정을 내리는 것", type: "SAGE" },
+          { text: "인간에 대한 따뜻한 애정 없이 서로를 부품이나 도구로만 취급하는 것", type: "LOVER" }
+        ]
+      },
+      {
+        question: "나에게 진정한 '성공'의 의미는 무엇인가요?",
+        choices: [
+          { text: "남들이 넘볼 수 없는 뛰어난 실력으로 당당하게 최고가 되는 것", type: "HERO" },
+          { text: "세상을 바꾸는 패러다임을 제시하고 기적 같은 변화를 이끄는 것", type: "MAGICIAN" },
+          { text: "평범하지만 좋은 이웃들과 함께 소박하고 평화롭게 어우러져 사는 것", type: "EVERYMAN" },
+          { text: "어떤 풍파에도 때 묻지 않고 맑고 순수한 영혼을 지켜내는 것", type: "INNOCENT" }
+        ]
+      },
+      {
+        question: "복잡한 문제를 해결해야 할 때 내가 가장 먼저 의지하는 방식은?",
+        choices: [
+          { text: "관련 서적, 논문, 데이터 등 검증된 지식을 철저하게 수집한다.", type: "SAGE" },
+          { text: "전체적인 직관과 통찰로 문제의 이면에 숨은 핵심 변수를 짚어낸다.", type: "MAGICIAN" },
+          { text: "역할을 명확히 나누고 마감 기한과 절차를 정해 프로세스로 푼다.", type: "RULER" },
+          { text: "직접 몸으로 부딪쳐 현장을 돌아다니며 단서를 찾아낸다.", type: "EXPLORER" }
+        ]
+      },
+      {
+        // 24번: 옵션 B 기반 (CAREGIVER, JESTER, LOVER, CREATOR)
+        question: "온전한 나만의 공간(방/작업실)을 새롭게 꾸밀 때 가장 먼저 고려하는 것은?",
+        choices: [
+          { text: "언제든 소중한 사람이 찾아와 편히 쉬다 갈 수 있는 포근하고 안락한 구성", type: "CAREGIVER" },
+          { text: "볼 때마다 피식 웃음이 나오는 위트 있는 피규어, 독특한 포스터와 소품", type: "JESTER" },
+          { text: "은은한 조명, 아늑한 향초와 음악 등 오감을 만족시키는 감성적인 무드", type: "LOVER" },
+          { text: "기성품 대신 내 손으로 직접 커스텀하거나 독창적인 개성이 돋보이는 오브제", type: "CREATOR" }
+        ]
+      }
+    ];
+
+    const scores = {
+      INNOCENT: 0, EVERYMAN: 0, HERO: 0, CAREGIVER: 0,
+      EXPLORER: 0, REBEL: 0, LOVER: 0, CREATOR: 0,
+      JESTER: 0, SAGE: 0, MAGICIAN: 0, RULER: 0
+    };
+
+    let currentIndex = 0;
+    const runes = ["I", "II", "III", "IV"];
+
+    function startDeck() {
+      document.getElementById('intro-view').style.display = 'none';
+      document.getElementById('quiz-scene').style.display = 'block';
+      renderCardQuestion();
+    }
+
+    function renderCardQuestion() {
+      const q = questions[currentIndex];
+      const cardNum = (currentIndex + 1).toString().padStart(2, '0');
+      
+      document.getElementById('deck-counter').innerText = `CARD ${cardNum} / 24`;
+      document.getElementById('prompt-text').innerText = q.question;
+      
+      const percent = (currentIndex / questions.length) * 100;
+      document.getElementById('progress-line').style.width = `${percent}%`;
+
+      const cardsContainer = document.getElementById('cards-container');
+      cardsContainer.innerHTML = '';
+
+      q.choices.forEach((choice, idx) => {
+        const card = document.createElement('div');
+        card.className = 'tarot-card';
+        card.innerHTML = `
+          <div class="card-rune">✦ ${runes[idx]} ✦</div>
+          <div class="card-text">${choice.text}</div>
+          <div class="card-seal">❖</div>
+        `;
+        
+        // 카드 클릭 시 위로 쑥 뽑혀 올라오는 연출 후 다음 문항 전환
+        card.onclick = () => {
+          cardsContainer.style.pointerEvents = 'none';
+           // 선택되지 않은 다른 카드들을 흐리게 처리하여 선택한 카드 강조
+          const allCards = cardsContainer.querySelectorAll('.tarot-card');
+          allCards.forEach(c => {
+            if (c !== card) c.style.opacity = '0.2';
+          });
+
+          card.classList.add('is-picked');
+          
+          // 0.8초(800ms) 동안 뽑힌 카드를 감상한 뒤 다음으로 이동
+          setTimeout(() => {
+            cardsContainer.style.pointerEvents = 'auto';
+            selectTarot(choice.type);
+          }, 800);
+        };
+
+
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    function selectTarot(type) {
+      scores[type] += 1;
+      currentIndex++;
+
+      if (currentIndex < questions.length) {
+        renderCardQuestion();
+      } else {
+        revealArchResult();
+      }
+    }
+    let userResultType = ''; // 전역 변수 선언
+
+    function revealArchResult() {
+      document.getElementById('progress-line').style.width = '100%';
+
+      // 1. 최고 점수 탐색
+      let maxScore = -1;
+      for (const type in scores) {
+        if (scores[type] > maxScore) {
+          maxScore = scores[type];
+        }
+      }
+
+      // 2. 동점 발생 시 무작위 1인 공정 추첨
+      const topTypes = [];
+      for (const type in scores) {
+        if (scores[type] === maxScore) {
+          topTypes.push(type);
+        }
+      }
+      userResultType = topTypes[Math.floor(Math.random() * topTypes.length)];
+      const result = archetypes[userResultType];
+
+      // 타로 아카이브 티켓 레이아웃 출력 (result-view로 감싸기)
+      const board = document.getElementById('main-board');
+      board.innerHTML = `
+        <div id="result-view">
+          <div class="ticket">
+            <div class="ticket-header">Archival Certificate</div>
+            <div class="ticket-badge">${result.badge}</div>
+            <h2 class="ticket-title">${result.title}</h2>
+            <div class="ticket-divider"></div>
+            <div class="ticket-desc">${result.desc}</div>
+            <div class="ticket-footer">
+              <div class="barcode">||| | | |||| | ||| | ||</div>
+              <div class="serial-no">UNCONSCIOUS SERIAL · ${Math.random().toString(36).substring(2, 9).toUpperCase()}</div>
+            </div>
+          </div>
+          <button class="secondary-btn" onclick="saveAndShareTicket()">✦ 결과 티켓 이미지 저장 / 공유</button>
+          <button class="secondary-btn" onclick="openArchiveViewer()">✦ 12대 원형 전체 도감 열람</button>
+          <button class="primary-btn" onclick="location.reload()">새로운 타로 덱 뽑기</button>
+        </div>
+
+        <!-- 12대 원형 도감 넘김 뷰어 -->
+        <div id="archive-view" class="archive-viewer">
+          <div class="ticket" id="archive-card-box"></div>
+          <div class="viewer-nav">
+            <button class="nav-arrow-btn" onclick="slideArchive(-1)">◀</button>
+            <span class="viewer-counter" id="archive-counter">01 / 12</span>
+            <button class="nav-arrow-btn" onclick="slideArchive(1)">▶</button>
+          </div>
+          <button class="secondary-btn" onclick="closeArchiveViewer()">내 결과 티켓으로 돌아가기</button>
+        </div>
+      `;
+    }
+
+    const archetypeKeys = Object.keys(archetypes);
+    let currentArchiveIdx = 0;
+
+    function openArchiveViewer() {
+      document.getElementById('result-view').style.display = 'none';
+      document.getElementById('archive-view').style.display = 'block';
+      // 사용자가 뽑은 결과 카드 번호부터 시작
+      currentArchiveIdx = archetypeKeys.indexOf(userResultType);
+      renderArchiveCard();
+    }
+
+    function closeArchiveViewer() {
+      document.getElementById('archive-view').style.display = 'none';
+      document.getElementById('result-view').style.display = 'block';
+    }
+
+    function slideArchive(direction) {
+      currentArchiveIdx += direction;
+      if (currentArchiveIdx < 0) currentArchiveIdx = archetypeKeys.length - 1;
+      if (currentArchiveIdx >= archetypeKeys.length) currentArchiveIdx = 0;
+      renderArchiveCard();
+    }
+
+    function renderArchiveCard() {
+      const typeKey = archetypeKeys[currentArchiveIdx];
+      const item = archetypes[typeKey];
+      const cardNum = (currentArchiveIdx + 1).toString().padStart(2, '0');
+
+      document.getElementById('archive-counter').innerText = `${cardNum} / 12`;
+      document.getElementById('archive-card-box').innerHTML = `
+        <div class="ticket-header">Arcana Archive Entry</div>
+        <div class="ticket-badge">${item.badge}</div>
+        <h2 class="ticket-title">${item.title}</h2>
+        <div class="ticket-divider"></div>
+        <div class="ticket-desc">${item.desc}</div>
+      `;
+    }
+async function saveAndShareTicket() {
+  const ticketElement = document.querySelector('.ticket');
+  if (!ticketElement) return;
+
+  try {
+    const canvas = await html2canvas(ticketElement, {
+      backgroundColor: null, // ★ 핵심 1: 배경 이중 덧칠로 어두워지는 현상 방지 (투명 베이스)
+      scale: 2,              // 선명한 해상도
+      useCORS: true,
+      logging: false,
+      // ★ 핵심 2: 복제본에서 fadeIn 애니메이션을 완전히 꺼서 100% 밝기 상태로 캡처
+      onclone: (clonedDoc) => {
+        const clonedTicket = clonedDoc.querySelector('.ticket');
+        if (clonedTicket) {
+          clonedTicket.style.animation = 'none';
+          clonedTicket.style.transition = 'none';
+          clonedTicket.style.opacity = '1';
+          clonedTicket.style.filter = 'none';
+        }
+      }
+    });
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const file = new File([blob], 'archetype-ticket.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'ARCHETYPE : 무의식의 타로 아카이브',
+            text: '나의 무의식 심연 속 원형 타로 티켓을 확인해보세요.',
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') console.error(err);
+        }
+      }
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'archetype-ticket.png';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }, 'image/png');
+
+  } catch (error) {
+    alert('이미지 저장 중 오류가 발생했습니다.');
+    console.error(error);
+  }
+}
+
+
+  </script>
+</body>
+</html>
